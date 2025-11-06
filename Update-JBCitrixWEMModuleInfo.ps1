@@ -1,0 +1,30 @@
+[CmdletBinding()]
+Param(
+    [String]$ModuleName = "JBC.EUCMigrationTools"
+)
+"$PSScriptRoot\$($ModuleName)\Public\*"
+$CmdLets = Get-ChildItem -Path "$PSScriptRoot\$($ModuleName)\Public\*" -Filter *.ps1 | Select-Object -ExpandProperty BaseName | Sort-Object
+
+$DateTime = Get-Date
+$Hour = $DateTime.Hour
+if ($DateTime.Minute -le 15) {
+    $Minutes = 15
+} elseif ($DateTime.Minute -le 30) {
+    $Minutes = 30
+} elseif ($DateTime.Minute -le 45) {
+    $Minutes = 45
+} else {
+    $Minutes = 0
+    if ($Hour -lt 23) {
+        $Hour++
+    } else {
+        $Hour = 0
+    }
+}
+$NewVersion = '{0}{1:d2}{2:d2}' -f (Get-Date -Format "yyyy.Mdd."), $Hour, $Minutes
+
+Update-ModuleManifest -Path "$PSScriptRoot\$($ModuleName)\$($ModuleName).psd1" `
+    -ModuleVersion $NewVersion `
+    -FunctionsToExport $CmdLets
+
+Write-Host "`r`nUpdated $($ModuleName) module manifest to version $NewVersion with $($CmdLets.Count) functions.`r`n" -ForegroundColor Green
